@@ -14,7 +14,7 @@ const App = () => {
   const frameCount = useRef(0);
   const images = useRef({});
   const lastMouseMoveTime = useRef(Date.now());
-  const treatStillDelay = 300; // milliseconds to wait before cat starts moving
+  const treatStillDelay = 250; // milliseconds to wait before cat starts moving
 
   // Image URLs in /public/running
   const imageUrls = {
