@@ -4,6 +4,8 @@ import treatIcon from '/running/treat.png'; // Make sure treat.png is in the sam
 const App = () => {
   const canvasRef = useRef(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [score, setScore] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('Move your mouse to start!');
   const treatImageRef = useRef(new Image()); // Ref for the treat image
 
   // Animation state refs
@@ -14,6 +16,7 @@ const App = () => {
   const frameCount = useRef(0);
   const images = useRef({});
   const lastMouseMoveTime = useRef(Date.now());
+  const lastOverlapState = useRef(false);
   const treatStillDelay = 250; // milliseconds to wait before cat starts moving
 
   // Image URLs in /public/running
@@ -91,7 +94,41 @@ const App = () => {
     const dx = mousePos.current.x - catPos.current.x;
     const dy = mousePos.current.y - catPos.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    return distance < 40; // Overlap threshold
+    const isOverlapping = distance < 40; // Overlap threshold
+    
+    // Check if cat just reached the treat (wasn't overlapping before, now is)
+    if (isOverlapping && !lastOverlapState.current) {
+      setScore(prev => prev + 1);
+    }
+    lastOverlapState.current = isOverlapping;
+    
+    return isOverlapping;
+  };
+
+  // Update status message based on cat state
+  const updateStatusMessage = (speed, distance) => {
+    const messages = {
+      idle: ['Waiting for treats...', 'Just chilling', 'Ready to pounce!', 'Meow?'],
+      nearTreat: ['Almost there!', 'So close!', 'Getting the treat!', 'Nom nom time!'],
+      farTreat: ['Chasing treat!', 'Running fast!', 'Gotta catch it!', 'Sprint mode!'],
+      stillTreat: ['Treat stopped moving...', 'Should I go?', 'Waiting...', 'Hmm...']
+    };
+
+    let category;
+    if (speed < 0.5) {
+      if (isTreatMoving()) {
+        category = 'stillTreat';
+      } else {
+        category = 'idle';
+      }
+    } else if (distance < 80) {
+      category = 'nearTreat';
+    } else {
+      category = 'farTreat';
+    }
+
+    const randomMessage = messages[category][Math.floor(Math.random() * messages[category].length)];
+    setStatusMessage(randomMessage);
   };
 
   // --- Soft alpha blending for mixed background ---
@@ -186,6 +223,11 @@ const App = () => {
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Update status message occasionally
+      if (frameCount.current % 120 === 0) { // Update every 2 seconds at 60fps
+        updateStatusMessage(speed, distance);
+      }
+
       // Draw the treat first (so cat appears on top) - only if not overlapping
       drawTreat(context);
 
@@ -267,8 +309,15 @@ const App = () => {
         overflow: 'hidden',
         margin: 0,
         padding: 0,
+        position: 'relative',
       }}
     >
+      <div style={{ position: 'absolute', top: 10, left: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
+        Score: {score}
+      </div>
+      <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
+        {statusMessage}
+      </div>
      <canvas
       ref={canvasRef}
       style={{
