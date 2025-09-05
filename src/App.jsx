@@ -311,7 +311,7 @@ const App = () => {
       {/* Mobile-responsive toggle switch */}
       <div style={{ 
         position: 'absolute', 
-        top:"75px",
+        top:"55px",
 
         right: '5px', 
         zIndex: 10, 
@@ -333,7 +333,7 @@ const App = () => {
           whiteSpace: 'nowrap',
           fontSize: window.innerWidth < 400 ? '11px' : '12px'
         }}>
-          {window.innerWidth < 400 ? 'Random' : 'Random Mode'}
+          Random Treat
         </span>
         <label style={{ 
           position: 'relative', 
