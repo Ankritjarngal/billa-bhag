@@ -1,12 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
-import treatIcon from '/running/treat.png'; // Make sure treat.png is in the same folder as App.js or adjust path
+import treatIcon from '/running/treat.png';
 
 const App = () => {
   const canvasRef = useRef(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [score, setScore] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Move your mouse to start!');
-  const treatImageRef = useRef(new Image()); // Ref for the treat image
+  const [randomMode, setRandomMode] = useState(false); // <-- Toggle state
+
+  const treatImageRef = useRef(new Image());
 
   // Animation state refs
   const mousePos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
@@ -17,9 +19,13 @@ const App = () => {
   const images = useRef({});
   const lastMouseMoveTime = useRef(Date.now());
   const lastOverlapState = useRef(false);
-  const treatStillDelay = 250; // milliseconds to wait before cat starts moving
+  const treatStillDelay = 250;
 
-  // Image URLs in /public/running
+  // For random mode
+  const randomTreatPos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  const lastRandomSpawn = useRef(Date.now());
+  const randomSpawnInterval = 2000; // spawn new treat every 2 seconds
+
   const imageUrls = {
     north: ['/running/image.png', '/running/image copy.png'],
     northeast: ['/running/image copy 2.png', '/running/image copy 3.png'],
@@ -32,7 +38,6 @@ const App = () => {
     idle: ['/running/image copy 15.png', '/running/image copy 16.png', '/running/image copy 17.png'],
   };
 
-  // Load all images
   const loadImages = async () => {
     const imagePromises = [];
     Object.keys(imageUrls).forEach((direction) => {
@@ -50,11 +55,10 @@ const App = () => {
       });
     });
 
-    // Load the treat image separately
     const treatPromise = new Promise((resolve, reject) => {
       treatImageRef.current.onload = () => resolve();
       treatImageRef.current.onerror = () => reject(new Error('Failed to load treat image'));
-      treatImageRef.current.src = treatIcon; // Use the imported path
+      treatImageRef.current.src = treatIcon;
     });
     imagePromises.push(treatPromise);
 
@@ -67,7 +71,6 @@ const App = () => {
     }
   };
 
-  // Direction calculation
   const getDirection = (dx, dy) => {
     const angle = Math.atan2(dy, dx);
     const degrees = ((angle * 180) / Math.PI + 360) % 360;
@@ -83,29 +86,39 @@ const App = () => {
     return 'east';
   };
 
-  // Check if treat is currently moving
   const isTreatMoving = () => {
     const now = Date.now();
     return (now - lastMouseMoveTime.current) < treatStillDelay;
   };
 
-  // Check if cat and treat overlap
   const checkOverlap = () => {
-    const dx = mousePos.current.x - catPos.current.x;
-    const dy = mousePos.current.y - catPos.current.y;
+    const targetPos = randomMode ? randomTreatPos.current : mousePos.current;
+    const dx = targetPos.x - catPos.current.x;
+    const dy = targetPos.y - catPos.current.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    const isOverlapping = distance < 40; // Overlap threshold
-    
-    // Check if cat just reached the treat (wasn't overlapping before, now is)
+    const isOverlapping = distance < 40;
+
     if (isOverlapping && !lastOverlapState.current) {
       setScore(prev => prev + 1);
+
+      // Move treat to new random spot in random mode
+      if (randomMode) {
+        spawnRandomTreat();
+      }
     }
     lastOverlapState.current = isOverlapping;
-    
+
     return isOverlapping;
   };
 
-  // Update status message based on cat state
+  const spawnRandomTreat = () => {
+    randomTreatPos.current = {
+      x: Math.random() * (window.innerWidth - 100) + 50,
+      y: Math.random() * (window.innerHeight - 100) + 50
+    };
+    lastRandomSpawn.current = Date.now();
+  };
+
   const updateStatusMessage = (speed, distance) => {
     const messages = {
       idle: ['Waiting for treats...', 'Just chilling', 'Ready to pounce!', 'Meow?'],
@@ -116,7 +129,7 @@ const App = () => {
 
     let category;
     if (speed < 0.5) {
-      if (isTreatMoving()) {
+      if (isTreatMoving() && !randomMode) {
         category = 'stillTreat';
       } else {
         category = 'idle';
@@ -131,7 +144,6 @@ const App = () => {
     setStatusMessage(randomMessage);
   };
 
-  // --- Soft alpha blending for mixed background ---
   const drawWithTransparency = (ctx, img, x, y, size) => {
     const offCanvas = document.createElement('canvas');
     offCanvas.width = size;
@@ -142,7 +154,6 @@ const App = () => {
     const imageData = offCtx.getImageData(0, 0, size, size);
     const data = imageData.data;
 
-    // Sample top-left pixel as background color
     const bgR = data[0];
     const bgG = data[1];
     const bgB = data[2];
@@ -155,7 +166,6 @@ const App = () => {
       const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
 
       if (dist < 50) {
-        // gradually fade out background
         data[i + 3] = (dist / 50) * data[i + 3];
       }
     }
@@ -181,25 +191,29 @@ const App = () => {
     resizeCanvas();
 
     const handleMouseMove = (event) => {
-      mousePos.current = { x: event.clientX, y: event.clientY };
-      lastMouseMoveTime.current = Date.now();
+      if (!randomMode) {
+        mousePos.current = { x: event.clientX, y: event.clientY };
+        lastMouseMoveTime.current = Date.now();
+      }
     };
 
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('mousemove', handleMouseMove);
 
+    if (randomMode) spawnRandomTreat();
+
     const animate = () => {
       frameCount.current++;
 
-      const dx = mousePos.current.x - catPos.current.x;
-      const dy = mousePos.current.y - catPos.current.y;
+      const targetPos = randomMode ? randomTreatPos.current : mousePos.current;
+      const dx = targetPos.x - catPos.current.x;
+      const dy = targetPos.y - catPos.current.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       const maxSpeed = 5;
       let acceleration = 0.05;
       let targetSpeed = 0;
 
-      // Only move cat if treat is not moving AND there's distance to cover
       if (!isTreatMoving() && distance > 15) {
         targetSpeed = Math.min((distance / 100) * maxSpeed, maxSpeed);
         if (distance > 100) acceleration = 0.15;
@@ -219,19 +233,14 @@ const App = () => {
         catVelocity.current.x * catVelocity.current.x + catVelocity.current.y * catVelocity.current.y
       );
 
-      // white background
       context.fillStyle = '#ffffff';
       context.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Update status message occasionally
-      if (frameCount.current % 120 === 0) { // Update every 2 seconds at 60fps
+      if (frameCount.current % 120 === 0) {
         updateStatusMessage(speed, distance);
       }
 
-      // Draw the treat first (so cat appears on top) - only if not overlapping
       drawTreat(context);
-
-      // draw cat (appears on top of treat)
       drawCat(context, speed, dx, dy, distance);
 
       animationFrameId.current = requestAnimationFrame(animate);
@@ -244,7 +253,7 @@ const App = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(animationFrameId.current);
     };
-  }, [imagesLoaded]);
+  }, [imagesLoaded, randomMode]);
 
   const drawCat = (ctx, speed, dx, dy, distance) => {
     ctx.save();
@@ -270,69 +279,103 @@ const App = () => {
     ctx.restore();
   };
 
-  // Modified function to draw the treat (only if not overlapping)
   const drawTreat = (ctx) => {
+    const targetPos = randomMode ? randomTreatPos.current : mousePos.current;
     if (!checkOverlap() && treatImageRef.current && treatImageRef.current.complete) {
-      const treatSize = 64; // Adjust size as needed
-      // Draw treat at mouse position, adjusting for its center
-      ctx.drawImage(treatImageRef.current, mousePos.current.x - treatSize / 2, mousePos.current.y - treatSize / 2, treatSize, treatSize);
+      const treatSize = 64;
+      ctx.drawImage(treatImageRef.current, targetPos.x - treatSize / 2, targetPos.y - treatSize / 2, treatSize, treatSize);
     }
   };
 
-
   if (!imagesLoaded) {
     return (
-      <>
-      <div
-        style={{
-          height: '100vh',
-          width: '100vw',
-          backgroundColor: '#000000',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          color: '#ffffff',
-          fontSize: '18px',
-          fontFamily: 'Arial, sans-serif',
-        }}
-      >
+      <div style={{
+        height: '100vh',
+        width: '100vw',
+        backgroundColor: '#000000',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: '#ffffff',
+        fontSize: '18px',
+        fontFamily: 'Arial, sans-serif',
+      }}>
         Loading cat images...
-        
       </div>
-</>
     );
   }
 
   return (
-    <main
-      style={{
-        height: '100vh',
-        width: '100vw',
-        backgroundColor: '#000000',
-        overflow: 'hidden',
-        margin: 0,
-        padding: 0,
-        position: 'relative',
-      }}
-    >
-      <div style={{ position: 'absolute', top: 10, left: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
+    <main style={{ height: '100vh', width: '100vw', backgroundColor: '#000000', overflow: 'hidden', margin: 0, padding: 0, position: 'relative' }}>
+      
+      {/* Toggle switch */}
+      <div style={{ 
+        position: 'absolute', 
+        bottom: 20, 
+        right: 20, 
+        zIndex: 10, 
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: '12px 16px',
+        borderRadius: '25px',
+        border: '2px solid #333',
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '12px',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: '#333'
+      }}>
+        <span>Random Mode Treat</span>
+        <label style={{ 
+          position: 'relative', 
+          display: 'inline-block', 
+          width: '44px', 
+          height: '24px',
+          cursor: 'pointer'
+        }}>
+          <input 
+            type="checkbox" 
+            checked={randomMode} 
+            onChange={() => setRandomMode(prev => !prev)}
+            style={{ opacity: 0, width: 0, height: 0 }}
+          />
+          <span style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: randomMode ? '#333' : '#fff',
+            border: '2px solid #333',
+            borderRadius: '24px',
+            transition: 'all 0.3s ease'
+          }}>
+            <span style={{
+              position: 'absolute',
+              content: '',
+              height: '16px',
+              width: '16px',
+              left: randomMode ? '24px' : '2px',
+              bottom: '2px',
+              backgroundColor: randomMode ? '#fff' : '#333',
+              borderRadius: '50%',
+              transition: 'all 0.3s ease'
+            }} />
+          </span>
+        </label>
+      </div>
+
+      <div style={{ position: 'absolute', top: 25, left: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
         Score: {score}
       </div>
-      <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 25, left: '50%', transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
         {statusMessage}
       </div>
-      <div style={{ position: 'absolute', top: 10, right: 10, transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 25, right: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
        Ankrit 
       </div>
-     <canvas
-      ref={canvasRef}
-      style={{
-        display: 'block',
-        width: '100%',
-        height: '100%',
-        cursor: 'none', // Hide the default cursor
-      }}
-    />
+      <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: 'none' }} />
     </main>
   );
 };
