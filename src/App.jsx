@@ -308,31 +308,39 @@ const App = () => {
   return (
     <main style={{ height: '100vh', width: '100vw', backgroundColor: '#000000', overflow: 'hidden', margin: 0, padding: 0, position: 'relative' }}>
       
-      {/* Toggle switch */}
+      {/* Mobile-responsive toggle switch */}
       <div style={{ 
         position: 'absolute', 
-        bottom: 20, 
-        right: 20, 
+        bottom: '10px', 
+        right: '10px', 
         zIndex: 10, 
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        padding: '12px 16px',
-        borderRadius: '25px',
+        padding: '8px 12px',
+        borderRadius: '20px',
         border: '2px solid #333',
         display: 'flex', 
         alignItems: 'center', 
-        gap: '12px',
+        gap: '8px',
         fontFamily: 'Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: '12px',
         fontWeight: '500',
-        color: '#333'
+        color: '#333',
+        maxWidth: 'calc(100vw - 40px)',
+        boxSizing: 'border-box'
       }}>
-        <span>Random Mode Treat</span>
+        <span style={{ 
+          whiteSpace: 'nowrap',
+          fontSize: window.innerWidth < 400 ? '11px' : '12px'
+        }}>
+          {window.innerWidth < 400 ? 'Random' : 'Random Mode'}
+        </span>
         <label style={{ 
           position: 'relative', 
           display: 'inline-block', 
-          width: '44px', 
-          height: '24px',
-          cursor: 'pointer'
+          width: '36px', 
+          height: '20px',
+          cursor: 'pointer',
+          flexShrink: 0
         }}>
           <input 
             type="checkbox" 
@@ -348,15 +356,15 @@ const App = () => {
             bottom: 0,
             backgroundColor: randomMode ? '#333' : '#fff',
             border: '2px solid #333',
-            borderRadius: '24px',
+            borderRadius: '20px',
             transition: 'all 0.3s ease'
           }}>
             <span style={{
               position: 'absolute',
               content: '',
-              height: '16px',
-              width: '16px',
-              left: randomMode ? '24px' : '2px',
+              height: '12px',
+              width: '12px',
+              left: randomMode ? '20px' : '2px',
               bottom: '2px',
               backgroundColor: randomMode ? '#fff' : '#333',
               borderRadius: '50%',
@@ -366,15 +374,46 @@ const App = () => {
         </label>
       </div>
 
-      <div style={{ position: 'absolute', top: 25, left: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
+      {/* Top UI elements - also made mobile responsive */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '15px', 
+        left: '10px', 
+        color: 'black', 
+        fontSize: window.innerWidth < 400 ? '14px' : '16px', 
+        zIndex: 10 
+      }}>
         Score: {score}
       </div>
-      <div style={{ position: 'absolute', top: 25, left: '50%', transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
+      
+      <div style={{ 
+        position: 'absolute', 
+        top: '15px', 
+        left: '50%', 
+        transform: 'translateX(-50%)', 
+        color: 'black', 
+        fontSize: window.innerWidth < 400 ? '13px' : '16px', 
+        zIndex: 10,
+        maxWidth: '50%',
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis'
+      }}>
         {statusMessage}
       </div>
-      <div style={{ position: 'absolute', top: 25, right: 10, color: 'black', fontSize: '16px', zIndex: 10 }}>
+      
+      <div style={{ 
+        position: 'absolute', 
+        top: '15px', 
+        right: '10px', 
+        color: 'black', 
+        fontSize: window.innerWidth < 400 ? '14px' : '16px', 
+        zIndex: 10 
+      }}>
        Ankrit 
       </div>
+      
       <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', cursor: 'none' }} />
     </main>
   );
