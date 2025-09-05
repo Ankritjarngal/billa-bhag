@@ -313,7 +313,7 @@ const App = () => {
         position: 'absolute', 
         top:"75px",
 
-        right: '15px', 
+        right: '5px', 
         zIndex: 10, 
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         padding: '8px 12px',
