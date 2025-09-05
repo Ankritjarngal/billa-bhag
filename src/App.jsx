@@ -311,8 +311,8 @@ const App = () => {
       {/* Mobile-responsive toggle switch */}
       <div style={{ 
         position: 'absolute', 
-        bottom: '10px', 
-        right: '10px', 
+        bottom: '25px', 
+        right: '25px', 
         zIndex: 10, 
         backgroundColor: 'rgba(255, 255, 255, 0.95)',
         padding: '8px 12px',
