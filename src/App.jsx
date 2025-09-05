@@ -282,6 +282,7 @@ const App = () => {
 
   if (!imagesLoaded) {
     return (
+      <>
       <div
         style={{
           height: '100vh',
@@ -296,7 +297,9 @@ const App = () => {
         }}
       >
         Loading cat images...
+        
       </div>
+</>
     );
   }
 
@@ -317,6 +320,9 @@ const App = () => {
       </div>
       <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
         {statusMessage}
+      </div>
+      <div style={{ position: 'absolute', top: 10, right: 10, transform: 'translateX(-50%)', color: 'black', fontSize: '16px', zIndex: 10 }}>
+       Ankrit 
       </div>
      <canvas
       ref={canvasRef}
