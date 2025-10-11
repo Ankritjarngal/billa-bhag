@@ -139,9 +139,9 @@ const App = () => {
     const messages = {
       idle: ['Waiting for treats...', 'Just chilling', 'Ready to pounce!', 'Meow?'],
       nearTreat: ['Almost there!', 'So close!', 'Getting the treat!', 'Nom nom time!'],
-      farTreat: ['Chasing treat!', 'Running fast!', 'Gotta catch it!', 'Sprint mode!'],
-      stillTreat: ['Treat stopped moving...', 'Should I go?', 'Waiting...', 'Hmm...'],
-      sleeping: ['Zzz...', 'Napping...', 'Sweet dreams...']
+      farTreat: ['Bhaaaaag.....', 'Running fast!', 'Gotta catch it!', 'Sprint mode!'],
+      stillTreat: ['Treat stopped moving...', 'Should I go?', 'Waiting...', 'Hmmmm...'],
+      sleeping: ['Zzz...', 'Napping...', 'Sweet dreams...','nini tiem...']
     };
     let category = 'farTreat';
     const isAnyCatSleeping = catsRef.current.some(cat => cat.state === 'sleeping');
